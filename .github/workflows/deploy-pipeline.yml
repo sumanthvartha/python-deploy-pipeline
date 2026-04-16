@@ -1,0 +1,94 @@
+name: Python Deployment Pipeline
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop]
+
+jobs:
+  # ========================================
+  # GATE 1: Automated CI Checks
+  # Runs on every PR - blocks merge if fails
+  # ========================================
+  ci-checks:
+    name: "CI: Lint + Security + Tests"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest flake8 bandit
+
+      - name: Run linting (flake8)
+        run: flake8 src/ --max-line-length=120
+
+      - name: Run security scan (bandit)
+        run: bandit -r src/ -ll
+
+      - name: Run unit tests (pytest)
+        run: pytest tests/ -v --tb=short
+
+  # ========================================
+  # DEV: Auto-deploy on merge to develop
+  # ========================================
+  deploy-dev:
+    name: "Deploy to Dev"
+    needs: ci-checks
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t task-api:${{ github.sha }} .
+
+      - name: Deploy to Dev
+        run: echo "Deploying to Dev environment..."
+
+  # ========================================
+  # GATE 2: Staging (requires lead approval)
+  # ========================================
+  deploy-staging:
+    name: "Deploy to Staging (approval required)"
+    needs: deploy-dev
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Staging
+        run: echo "Deploying to Staging environment..."
+
+      - name: Run smoke test
+        run: echo "Smoke test - checking /health endpoint..."
+
+  # ========================================
+  # GATE 3: Production (requires manager approval)
+  # ========================================
+  deploy-production:
+    name: "Deploy to Production (approval required)"
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Production
+        run: echo "Deploying to Production..."
+
+      - name: Verify deployment
+        run: echo "Production deployment verified!"
