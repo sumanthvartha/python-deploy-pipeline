@@ -59,3 +59,9 @@ def test_update_task_not_found(client):
     """Test: Does updating a non-existent task return 404?"""
     response = client.put("/api/tasks/999")
     assert response.status_code == 404
+
+def test_get_version(client):
+    """Version endpoint should return current version."""
+    response = client.get("/api/version")
+    assert response.status_code == 200
+    assert "version" in response.get_json()

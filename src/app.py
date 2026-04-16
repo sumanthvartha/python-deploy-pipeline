@@ -12,6 +12,12 @@ def health_check():
     return jsonify({"status": "healthy"}), 200
 
 
+@app.route("/api/version", methods=["GET"])
+def get_version():
+    """Returns the current API version."""
+    return jsonify({"version": "1.0.0"}), 200
+
+
 @app.route("/api/tasks", methods=["GET"])
 def get_tasks():
     """Return all tasks."""
