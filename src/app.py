@@ -11,6 +11,7 @@ def health_check():
     """Health endpoint - deployment pipelines hit this to verify the app is alive."""
     return jsonify({"status": "healthy"}), 200
 
+
 @app.route("/api/version", methods=["GET"])
 def get_version():
     """Returns the current API version."""
