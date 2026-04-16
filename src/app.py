@@ -11,6 +11,11 @@ def health_check():
     """Health endpoint - deployment pipelines hit this to verify the app is alive."""
     return jsonify({"status": "healthy"}), 200
 
+@app.route("/api/version", methods=["GET"])
+def get_version():
+    """Returns the current API version."""
+    return jsonify({"version": "1.0.0"}), 200
+
 
 @app.route("/api/tasks", methods=["GET"])
 def get_tasks():
