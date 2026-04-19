@@ -8,7 +8,7 @@ tasks = []
 
 @app.route("/health", methods=["GET"])
 def health_check():
-    """Health endpoint - deployment pipelines hit this to verify the app is alive."""
+    """Returns healthy status. Used by pipeline smoke tests after every deployment.."""
     return jsonify({"status": "healthy"}), 200
 
 
