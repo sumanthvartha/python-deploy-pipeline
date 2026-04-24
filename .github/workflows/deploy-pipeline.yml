@@ -51,12 +51,34 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install gunicorn
+
       - name: Build Docker image
         run: docker build -t task-api:${{ github.sha }} .
 
-      - name: Deploy to Dev
-        run: echo "Deploying to Dev environment..."
+      - name: Run container
+        run: |
+          docker run -d -p 5000:5000 --name task-api-dev task-api:${{ github.sha }}
+          sleep 5
 
+      - name: Smoke test
+        run: |
+          curl -f http://localhost:5000/health
+          echo "Health check passed"
+
+      - name: Show response
+        run: curl http://localhost:5000/health
+
+      - name: Stop container
+        run: docker stop task-api-dev
   # ========================================
   # GATE 2: Staging (requires lead approval)
   # ========================================
@@ -69,11 +91,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to Staging
-        run: echo "Deploying to Staging environment..."
+      - name: Build Docker image
+        run: docker build -t task-api:${{ github.sha }} .
 
-      - name: Run smoke test
-        run: echo "Smoke test - checking /health endpoint..."
+      - name: Run container
+        run: |
+          docker run -d -p 5000:5000 --name task-api-staging task-api:${{ github.sha }}
+          sleep 5
+
+      - name: Smoke test
+        run: |
+          curl -f http://localhost:5000/health
+          echo "Staging health check passed"
+
+      - name: Stop container
+        run: docker stop task-api-staging
 
   # ========================================
   # GATE 3: Production (requires manager approval)
@@ -87,8 +119,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to Production
-        run: echo "Deploying to Production..."
+      - name: Build Docker image
+        run: docker build -t task-api:${{ github.sha }} .
 
-      - name: Verify deployment
-        run: echo "Production deployment verified!"
+      - name: Run container
+        run: |
+          docker run -d -p 5000:5000 --name task-api-prod task-api:${{ github.sha }}
+          sleep 5
+
+      - name: Smoke test
+        run: |
+          curl -f http://localhost:5000/health
+          echo "Production health check passed"
+
+      - name: Stop container
+        run: docker stop task-api-prod
