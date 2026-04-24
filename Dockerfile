@@ -17,4 +17,4 @@ COPY src/ src/
 EXPOSE 5000
 
 # Step 7: Command to run the app
-CMD ["python", "src/app.py"]
+CMD ["gunicorn", "--workers=2", "--bind=0.0.0.0:5000", "src.app:app"]
